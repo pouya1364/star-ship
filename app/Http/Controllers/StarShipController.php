@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
@@ -22,7 +24,7 @@ class StarShipController extends BaseController
     public function starship(): View
     {
         $starShips = $this->dataProvider->fetchShips();
-        $ships = StarShip::sortBySpeedDescending( $starShips );
+        $ships = StarShip::sortBySpeedDescending($starShips);
 
         // Get the first element of sorted ships based on speed
         $fastestShip = reset($ships);

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Domain\Ship\StarShip;
 
@@ -35,7 +37,7 @@ class SWAPIShipDataProvider implements ShipDataProvider
     {
         $starShips = [];
         $this->getStarships($this->limit);
-        $filteredStarships = $this->getFilteredStarships( $this->allStarships, $this->limit);
+        $filteredStarships = $this->getFilteredStarships($this->allStarships, $this->limit);
 
         foreach ($filteredStarships as $starship) {
             $pilots = $this->getPilot($starship['pilots']);
@@ -63,16 +65,16 @@ class SWAPIShipDataProvider implements ShipDataProvider
     {
         $count = 0;
         $response = $this->client->get($this->url);
-        $data = json_decode( $response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR );
+        $data = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
 
-        if (isset($data['results'])){
+        if (isset($data['results'])) {
             foreach ($data['results'] as $starship) {
                 $this->allStarships[]= $starship;
                 $count = count($this->allStarships);
             }
         }
 
-        if (isset($data['next']) && $count < $limit ) {
+        if (isset($data['next']) && $count < $limit) {
             $this->url = $data['next'];
             $this->getStarships($limit);
         }
@@ -124,7 +126,7 @@ class SWAPIShipDataProvider implements ShipDataProvider
     }
 
 
-    public function setLimit( int $limit ): void
+    public function setLimit(int $limit): void
     {
         $this->limit = $limit;
     }

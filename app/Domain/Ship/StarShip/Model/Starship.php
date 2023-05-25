@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace App\Domain\Ship\StarShip\Model;
 
@@ -14,8 +16,7 @@ class Starship implements CargoTransport
         private array  $pilots,
         private int    $speed,
         private int    $crew,
-    )
-    {
+    ) {
     }
 
     /**
@@ -45,7 +46,7 @@ class Starship implements CargoTransport
     /**
      * Sort the all fetched ships by their speed with descending order
      */
-    public static function sortBySpeedDescending( array $starships): array
+    public static function sortBySpeedDescending(array $starships): array
     {
         usort($starships, static function ($a, $b) {
             Assert::assertInstanceOf(self::class, $a, 'The provided array is not an instance of '.self::class);
