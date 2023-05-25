@@ -7,40 +7,37 @@ namespace App\Domain\Ship\StarShip;
 use App\Domain\Ship\Interface\ShipDataProvider;
 use App\Domain\Ship\StarShip\Model\Pilot;
 use App\Domain\Ship\StarShip\Model\Starship;
-use GuzzleHttp\Exception\GuzzleException;
+use App\Domain\Ship\StarShip\Infrastructure\SWAPIPilotApiClient;
+use App\Domain\Ship\StarShip\Infrastructure\SWAPIShipApiClient;
+use App\Exceptions\SWAPIShipException;
 use JsonException;
-use GuzzleHttp\Client;
 
 class SWAPIShipDataProvider implements ShipDataProvider
 {
-    private Client $client;
-    private array  $allStarships;
-    private string $url;
-    private int    $limit;
+    // Limit the number of ships in request
+    private int $limit;
 
-    public function __construct()
-    {
-        $this->client       = new Client();
-        $this->allStarships = [];
-        $this->url = "https://swapi.dev/api/starships/";
+    public function __construct(
+        private SWAPIShipApiClient $shipApiClient,
+        private SWAPIPilotApiClient $pilotApiClient
+    ) {
         $this->limit = 15;
     }
 
     /**
-     * Fetch the ships and return them based on limit number.
+     * Fetch the ships and return them based on the limit number.
      * It is possible to change the limit based on the needs.
      *
      * @throws JsonException
-     * @throws GuzzleException
      */
     public function fetchShips(): array
     {
         $starShips = [];
-        $this->getStarships($this->limit);
-        $filteredStarships = $this->getFilteredStarships($this->allStarships, $this->limit);
+        $allStarships = $this->shipApiClient->fetchStarships();
+        $filteredStarships = array_slice($allStarships, 0, $this->limit);
 
         foreach ($filteredStarships as $starship) {
-            $pilots = $this->getPilot($starship['pilots']);
+            $pilots = $this->getPilots($starship['pilots']);
             $starShips[] = new Starship(
                 $starship['name'],
                 $starship['model'],
@@ -54,81 +51,31 @@ class SWAPIShipDataProvider implements ShipDataProvider
         return $starShips;
     }
 
-
     /**
-     * Call Starship API and get the ships
+     * Fetch the pilots and return them as Pilot objects.
      *
-     * @throws GuzzleException
      * @throws JsonException
      */
-    private function getStarships(int $limit): void
-    {
-        $count = 0;
-        $response = $this->client->get($this->url);
-        $data = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
-
-        if (isset($data['results'])) {
-            foreach ($data['results'] as $starship) {
-                $this->allStarships[]= $starship;
-                $count = count($this->allStarships);
-            }
-        }
-
-        if (isset($data['next']) && $count < $limit) {
-            $this->url = $data['next'];
-            $this->getStarships($limit);
-        }
-
-    }
-
-    /**
-     * Filter out the sips based on the limited requested numbers
-     */
-    private function getFilteredStarships(array $ships, int $limit): array
-    {
-        $filteredStarships = [];
-        $count = 0;
-
-        foreach ($ships as $starship) {
-            $filteredStarships[] = $starship;
-            $count++;
-
-            if ($count === $limit) {
-                break;
-            }
-        }
-
-        return $filteredStarships;
-    }
-
-
-    /**
-     * Call Pilot API and fetch the data and return it based on Pilot class
-     *
-     * @throws GuzzleException
-     * @throws JsonException
-     */
-    private function getPilot(array $pilotUrls): array
+    private function getPilots(array $pilotUrls): array
     {
         $pilotList = [];
+
         foreach ($pilotUrls as $pilotUrl) {
-            $pilotResponse = $this->client->get($pilotUrl);
-            $pilotData = json_decode(
-                $pilotResponse->getBody()->getContents(),
-                true,
-                512,
-                JSON_THROW_ON_ERROR
-            );
+            $pilotData = $this->pilotApiClient->fetchPilot($pilotUrl);
 
             $pilotList[] = new Pilot($pilotData['name'], (int) $pilotData['height']);
         }
+
         return $pilotList;
     }
 
-
     public function setLimit(int $limit): void
     {
-        $this->limit = $limit;
+        if ($limit > 0) {
+            $this->limit = $limit;
+        } else {
+            throw new SWAPIShipException( "The limit number should not be negative");
+        }
     }
 
     public function getLimit(): int

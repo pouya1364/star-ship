@@ -26,7 +26,7 @@ class StarShipController extends BaseController
         $starShips = $this->dataProvider->fetchShips();
         $ships = StarShip::sortBySpeedDescending($starShips);
 
-        // Get the first element of sorted ships based on speed
+        // Get the highest speed ship element of sorted ships based on speed
         $fastestShip = reset($ships);
 
         return view('starships', compact('ships', 'fastestShip'));

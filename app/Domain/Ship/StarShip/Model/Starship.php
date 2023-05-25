@@ -21,14 +21,15 @@ class Starship implements CargoTransport
 
     /**
      * Add more cargo to the ship and reduce the current capacity
+     *
+     * @throws \Exception
      */
     public function addCargo(int $cargo): int
     {
         if ($cargo <= $this->cargoCapacity) {
             $this->cargoCapacity -= $cargo;
-            echo "Cargo added to {$this->name}. Remaining capacity: {$this->cargoCapacity} tons.\n";
         } else {
-            echo "{$this->name} cannot accommodate that much cargo.\n";
+            throw new \RuntimeException('The Cargo is over loaded');
         }
 
         return $this->cargoCapacity;
@@ -49,9 +50,6 @@ class Starship implements CargoTransport
     public static function sortBySpeedDescending(array $starships): array
     {
         usort($starships, static function ($a, $b) {
-            Assert::assertInstanceOf(self::class, $a, 'The provided array is not an instance of '.self::class);
-            Assert::assertInstanceOf(self::class, $b, 'The provided array is not an instance of '.self::class);
-
             return $b->getSpeed() - $a->getSpeed();
         });
 
